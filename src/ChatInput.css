@@ -1,139 +1,111 @@
-/* akong-button · Web 样式 · 用 var(--ak-*) 接 @akong/tokens */
+/* akong-chat-input · Web 样式 · 用 var(--ak-*) 接 @akong/tokens */
 
 .ak-chat-input {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ak-space-2);
+  padding: var(--ak-space-2) var(--ak-space-3);
+  padding-bottom: calc(var(--ak-space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--ak-bg-elevated);
+  border-top: 1px solid var(--ak-border);
+  font-family: var(--ak-font-sans);
+  box-sizing: border-box;
+  /* iOS 软键盘弹起补偿 (JS 动态写 --ak-kb-offset) */
+  transform: translateY(calc(-1 * var(--ak-kb-offset, 0px)));
+  transition: transform var(--ak-duration-fast) var(--ak-ease-out);
+}
+
+.ak-chat-input__slot {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--ak-space-2);
-  font-family: var(--ak-font-sans);
-  font-weight: var(--ak-weight-medium);
-  letter-spacing: var(--ak-tracking-tight);
+  flex-shrink: 0;
+  /* slot 内子按钮 baseline 对齐 textarea 底 */
+  padding-bottom: var(--ak-space-2);
+}
+
+.ak-chat-input__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.ak-chat-input__textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: var(--ak-bg-subtle);
+  color: var(--ak-fg);
+  font: inherit;
+  font-size: var(--ak-text-base);
+  line-height: 1.4;
+  padding: var(--ak-space-2) var(--ak-space-3);
+  border-radius: var(--ak-radius-2xl);
+  box-sizing: border-box;
+  /* maxRows 通过 inline style 写 max-height · 超出滚动 */
+  overflow-y: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--ak-duration-fast) var(--ak-ease-out);
+}
+
+.ak-chat-input__textarea::placeholder {
+  color: var(--ak-fg-subtle);
+}
+
+.ak-chat-input__textarea:focus {
+  background: var(--ak-bg);
+  outline: 2px solid var(--ak-border-strong);
+  outline-offset: -2px;
+}
+
+.ak-chat-input__textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ak-chat-input__send {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 var(--ak-space-4);
   border: 0;
   border-radius: var(--ak-radius-full);
+  background: var(--ak-fg);
+  color: var(--ak-fg-inverse);
+  font-family: inherit;
+  font-size: var(--ak-text-sm);
+  font-weight: var(--ak-weight-medium);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  white-space: nowrap;
   transition:
     background-color var(--ak-duration-fast) var(--ak-ease-out),
-    color var(--ak-duration-fast) var(--ak-ease-out),
     opacity var(--ak-duration-fast) var(--ak-ease-out);
-  white-space: nowrap;
-  outline: none;
+  margin-bottom: 0;
 }
 
-.ak-chat-input:focus-visible {
-  outline: 2px solid var(--ak-border-strong);
-  outline-offset: 2px;
+.ak-chat-input__send:hover:not(:disabled) {
+  background: var(--ak-gray-11);
 }
 
-.ak-chat-input:active:not(:disabled) {
+.ak-chat-input__send:active:not(:disabled) {
   opacity: 0.7;
 }
 
-.ak-chat-input:disabled,
-.ak-chat-input[aria-disabled="true"] {
+.ak-chat-input__send:disabled,
+.ak-chat-input__send[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-/* === Sizes === */
-.ak-chat-input--sm {
-  height: 32px;
-  padding: 0 var(--ak-space-3);
-  font-size: var(--ak-text-sm);
-  min-width: 32px;
-}
-.ak-chat-input--md {
-  height: 40px;
-  padding: 0 var(--ak-space-4);
-  font-size: var(--ak-text-base);
-  min-width: 40px;
-}
-.ak-chat-input--lg {
-  height: 48px;
-  padding: 0 var(--ak-space-5);
-  font-size: var(--ak-text-md);
-  min-width: 48px;
-}
-
-/* === Variants === */
-.ak-chat-input--primary {
-  background: var(--ak-fg);
-  color: var(--ak-fg-inverse);
-}
-.ak-chat-input--primary:hover:not(:disabled) {
-  background: var(--ak-gray-11);
-}
-
-.ak-chat-input--secondary {
-  background: var(--ak-bg-subtle);
-  color: var(--ak-fg);
-}
-.ak-chat-input--secondary:hover:not(:disabled) {
-  background: var(--ak-bg-hover);
-}
-
-.ak-chat-input--ghost {
-  background: transparent;
-  color: var(--ak-fg);
-}
-.ak-chat-input--ghost:hover:not(:disabled) {
-  background: var(--ak-bg-subtle);
-}
-
-.ak-chat-input--destructive {
-  background: var(--ak-accent);
-  color: var(--ak-accent-fg);
-}
-.ak-chat-input--destructive:hover:not(:disabled) {
-  background: var(--ak-accent-10);
-}
-
-.ak-chat-input--link {
-  background: transparent;
-  color: var(--ak-fg);
-  padding: 0;
-  height: auto;
-  min-width: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--ak-border-strong);
-}
-.ak-chat-input--link:hover:not(:disabled) {
-  text-decoration-color: var(--ak-fg);
-}
-
-/* === Modifiers === */
-.ak-chat-input--full-width { width: 100%; }
-
-.ak-chat-input--loading {
-  pointer-events: none;
-  position: relative;
-  color: transparent !important;
-}
-.ak-chat-input--loading::after {
-  content: "";
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  color: var(--ak-fg-muted);
-  animation: ak-spin 0.7s linear infinite;
-}
-.ak-chat-input--primary.ak-chat-input--loading::after,
-.ak-chat-input--destructive.ak-chat-input--loading::after {
-  color: var(--ak-fg-inverse);
-}
-
-@keyframes ak-spin {
-  to { transform: rotate(360deg); }
-}
-
-.ak-chat-input__icon {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
+.ak-chat-input__send:focus-visible {
+  outline: 2px solid var(--ak-border-strong);
+  outline-offset: 2px;
 }

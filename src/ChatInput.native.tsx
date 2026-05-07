@@ -2,101 +2,137 @@
  * akong ChatInput · React Native 实现
  *
  * Metro bundler 默认按 `.native.tsx` 后缀解析 RN 端 · `.tsx` 解析 Web 端
- * 用方 `import { ChatInput } from '@akong/button'` 自动取对应平台
+ * 用方 `import { ChatInput } from '@akong/chat-input'` 自动取对应平台
  */
 
-import { Pressable, Text, View, ActivityIndicator, useColorScheme } from 'react-native'
+import { useCallback } from 'react'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+  useColorScheme,
+} from 'react-native'
 import { tokens } from '@akong/tokens'
 import type { ChatInputProps } from './ChatInput.types'
 
-const sizes = {
-  sm: { height: 32, paddingH: tokens.space[3], fontSize: tokens.text.sm },
-  md: { height: 40, paddingH: tokens.space[4], fontSize: tokens.text.base },
-  lg: { height: 48, paddingH: tokens.space[5], fontSize: tokens.text.md },
-} as const
-
-function variantStyles(variant: NonNullable<ChatInputProps['variant']>, scheme: 'light' | 'dark') {
-  const t = scheme === 'dark' ? tokens.dark : tokens.light
-  switch (variant) {
-    case 'primary':
-      return { bg: t.fg, fg: t.fgInverse }
-    case 'secondary':
-      return { bg: t.bgSubtle, fg: t.fg }
-    case 'ghost':
-      return { bg: 'transparent', fg: t.fg }
-    case 'destructive':
-      return { bg: t.accent, fg: t.accentFg }
-    case 'link':
-      return { bg: 'transparent', fg: t.fg }
-  }
-}
-
 export function ChatInput(props: ChatInputProps) {
   const {
-    variant = 'primary',
-    size = 'md',
+    value,
+    onChange,
+    onSend,
+    placeholder = '输入消息...',
     disabled = false,
-    loading = false,
-    fullWidth = false,
-    iconLeft,
-    iconRight,
-    children,
-    onClick,
-    onPress,
-    ariaLabel,
+    maxRows = 5,
+    leadingActions,
+    trailingActions,
+    sendLabel = '发送',
   } = props
 
   const scheme = (useColorScheme() ?? 'light') as 'light' | 'dark'
-  const sz = sizes[size]
-  const v = variantStyles(variant, scheme)
+  const t = scheme === 'dark' ? tokens.dark : tokens.light
 
-  const handle = () => {
-    if (disabled || loading) return
-    onClick?.()
-    onPress?.()
-  }
+  const canSend = !disabled && value.trim().length > 0
+
+  const fire = useCallback(() => {
+    if (disabled) return
+    const text = value.trim()
+    if (text.length === 0) return
+    onSend(text)
+  }, [disabled, value, onSend])
 
   return (
-    <Pressable
-      onPress={handle}
-      accessibilityLabel={ariaLabel}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      disabled={disabled || loading}
-      style={({ pressed }: { pressed: boolean }) => ({
-        height: variant === 'link' ? undefined : sz.height,
-        paddingHorizontal: variant === 'link' ? 0 : sz.paddingH,
-        backgroundColor: v.bg,
-        borderRadius: variant === 'link' ? 0 : tokens.radius.full,
-        flexDirection: 'row' as const,
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-        alignSelf: (fullWidth ? 'stretch' : 'flex-start') as 'stretch' | 'flex-start',
-        opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
-        gap: tokens.space[2],
-      })}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{
+        backgroundColor: t.bgElevated,
+        borderTopWidth: 1,
+        borderTopColor: t.border,
+      }}
     >
-      {loading ? (
-        <ActivityIndicator color={v.fg as string} />
-      ) : (
-        <>
-          {iconLeft && <View>{iconLeft}</View>}
-          {children && (
-            <Text
-              style={{
-                color: v.fg as string,
-                fontSize: sz.fontSize,
-                fontWeight: tokens.weight.medium,
-                textDecorationLine: variant === 'link' ? 'underline' : 'none',
-              }}
-            >
-              {children}
-            </Text>
-          )}
-          {iconRight && <View>{iconRight}</View>}
-        </>
-      )}
-    </Pressable>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: tokens.space[2],
+          paddingHorizontal: tokens.space[3],
+          paddingTop: tokens.space[2],
+          paddingBottom: tokens.space[2],
+        }}
+      >
+        {leadingActions ? (
+          <View style={{ paddingBottom: tokens.space[2] }}>{leadingActions}</View>
+        ) : null}
+
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: t.bgSubtle,
+            borderRadius: tokens.radius['2xl'],
+            paddingHorizontal: tokens.space[3],
+            paddingVertical: tokens.space[2],
+          }}
+        >
+          <TextInput
+            value={value}
+            onChangeText={onChange}
+            placeholder={placeholder}
+            placeholderTextColor={t.fgSubtle}
+            editable={!disabled}
+            multiline
+            // Android 限行 · iOS 通过下面 maxHeight style 限
+            numberOfLines={maxRows}
+            returnKeyType="send"
+            blurOnSubmit={false}
+            autoCapitalize="none"
+            autoCorrect={false}
+            onSubmitEditing={fire}
+            style={{
+              color: t.fg,
+              fontSize: tokens.text.base,
+              lineHeight: tokens.text.base * 1.4,
+              padding: 0,
+              margin: 0,
+              minHeight: tokens.text.base * 1.4,
+              maxHeight: tokens.text.base * 1.4 * maxRows,
+            }}
+          />
+        </View>
+
+        {trailingActions ? (
+          <View style={{ paddingBottom: tokens.space[2] }}>{trailingActions}</View>
+        ) : null}
+
+        <Pressable
+          onPress={fire}
+          disabled={!canSend}
+          accessibilityRole="button"
+          accessibilityLabel={sendLabel}
+          accessibilityState={{ disabled: !canSend }}
+          style={({ pressed }: { pressed: boolean }) => ({
+            height: 36,
+            paddingHorizontal: tokens.space[4],
+            borderRadius: tokens.radius.full,
+            backgroundColor: t.fg,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            opacity: !canSend ? 0.4 : pressed ? 0.7 : 1,
+          })}
+        >
+          <Text
+            style={{
+              color: t.fgInverse,
+              fontSize: tokens.text.sm,
+              fontWeight: tokens.weight.medium,
+            }}
+          >
+            {sendLabel}
+          </Text>
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   )
 }
 
